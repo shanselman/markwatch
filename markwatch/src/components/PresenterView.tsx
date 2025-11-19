@@ -5,12 +5,14 @@ interface PresenterViewProps {
   remainingMs: number
   progress: number
   totalDuration: number
+  shrinkMode?: boolean
 }
 
 const PresenterView: React.FC<PresenterViewProps> = ({ 
   topic, 
   remainingMs, 
-  progress
+  progress,
+  shrinkMode = true
 }) => {
   const minutes = Math.floor(remainingMs / 60000)
   const seconds = Math.floor((remainingMs % 60000) / 1000)
@@ -20,11 +22,16 @@ const PresenterView: React.FC<PresenterViewProps> = ({
 
   const rotation = progress * 360
   const circumference = 2 * Math.PI * 230
-  const strokeDashoffset = circumference * (1 - progress)
+  const strokeDashoffset = shrinkMode 
+    ? circumference * progress 
+    : circumference * (1 - progress)
 
   const isExpired = remainingMs <= 0
   const isRed = remainingMs <= 5000
   const isWarning = remainingMs <= 15000 && remainingMs > 5000
+
+  const maskBaseFill = shrinkMode ? 'white' : 'black'
+  const maskPathFill = shrinkMode ? 'black' : 'white'
 
   let color = '#06b6d4' // cyan
   if (isExpired || isRed) {
@@ -44,8 +51,8 @@ const PresenterView: React.FC<PresenterViewProps> = ({
         <svg className="presenter-progress-ring" viewBox="0 0 500 500">
           <defs>
             <mask id="pie-mask">
-              <rect width="500" height="500" fill="white" />
-              <circle cx="250" cy="250" r="245" fill="black" />
+              <rect width="500" height="500" fill="black" />
+              <circle cx="250" cy="250" r="245" fill={maskBaseFill} />
               {progress < 1 && (
                 <path
                   d={`M 250 250 L 250 5 A 245 245 0 ${progress > 0.5 ? 1 : 0} 1 ${
@@ -53,11 +60,11 @@ const PresenterView: React.FC<PresenterViewProps> = ({
                   } ${
                     250 - 245 * Math.cos(progress * 2 * Math.PI)
                   } Z`}
-                  fill="white"
+                  fill={maskPathFill}
                 />
               )}
               {progress >= 1 && (
-                <circle cx="250" cy="250" r="245" fill="white" />
+                <circle cx="250" cy="250" r="245" fill={maskPathFill} />
               )}
             </mask>
           </defs>

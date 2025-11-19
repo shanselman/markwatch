@@ -16,6 +16,7 @@ function App() {
     const saved = localStorage.getItem(CURRENT_INDEX_KEY)
     return saved ? parseInt(saved, 10) : 0
   })
+  const [shrinkMode, setShrinkMode] = useState(true)
   const [isRunning, setIsRunning] = useState(false)
   const [elapsedMs, setElapsedMs] = useState(0)
   const startTimeRef = useRef<number>(0)
@@ -119,11 +120,12 @@ function App() {
           topic: currentTopic?.name || 'Loading...',
           remainingMs,
           progress,
-          totalDuration
+          totalDuration,
+          shrinkMode
         }
       }, '*')
     }
-  }, [currentTopic, elapsedMs, totalDuration])
+  }, [currentTopic, elapsedMs, totalDuration, shrinkMode])
 
   const handleFileLoad = (loadedTopics: Topic[], showPresenter: boolean) => {
     setTopics(loadedTopics)
@@ -172,7 +174,8 @@ function App() {
               topic,
               remainingMs,
               progress,
-              totalDuration: duration
+              totalDuration: duration,
+              shrinkMode
             }
           }, '*')
           window.removeEventListener('message', handleMessage)
@@ -303,6 +306,15 @@ function App() {
             <span className="topic-counter">
               {currentTopicIndex + 1} / {topics.length}
             </span>
+            <label style={{ marginLeft: '2rem', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={shrinkMode} 
+                onChange={(e) => setShrinkMode(e.target.checked)}
+                style={{ marginRight: '0.5rem' }}
+              />
+              Shrink (vs Grow)
+            </label>
           </div>
         </>
       )}

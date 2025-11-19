@@ -15,6 +15,7 @@ interface TimerState {
   remainingMs: number
   progress: number
   totalDuration: number
+  shrinkMode?: boolean
 }
 
 function PresenterApp() {
@@ -22,7 +23,8 @@ function PresenterApp() {
     topic: 'Loading...',
     remainingMs: 0,
     progress: 0,
-    totalDuration: 90
+    totalDuration: 90,
+    shrinkMode: true
   })
 
   React.useEffect(() => {
@@ -33,7 +35,8 @@ function PresenterApp() {
           topic: payload.topic,
           remainingMs: payload.remainingMs,
           progress: payload.progress,
-          totalDuration: payload.totalDuration
+          totalDuration: payload.totalDuration,
+          shrinkMode: payload.shrinkMode ?? true
         })
       }
     }
@@ -54,6 +57,7 @@ function PresenterApp() {
       remainingMs={state.remainingMs}
       progress={state.progress}
       totalDuration={state.totalDuration}
+      shrinkMode={state.shrinkMode}
     />
   )
 }
