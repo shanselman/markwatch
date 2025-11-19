@@ -145,8 +145,11 @@ function App() {
     const left = window.screen.width - width - 100
     const top = 100
 
+    // Use relative path so it works in both dev and production
+    const presenterUrl = new URL('./presenter.html', window.location.href).href
+
     const presenterWindow = window.open(
-      '/presenter.html',
+      presenterUrl,
       'MarkWatch Presenter',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`
     )
