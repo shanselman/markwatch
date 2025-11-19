@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import './PresenterView.css'
 
 interface PresenterViewProps {
@@ -11,8 +10,7 @@ interface PresenterViewProps {
 const PresenterView: React.FC<PresenterViewProps> = ({ 
   topic, 
   remainingMs, 
-  progress,
-  totalDuration 
+  progress
 }) => {
   const minutes = Math.floor(remainingMs / 60000)
   const seconds = Math.floor((remainingMs % 60000) / 1000)
