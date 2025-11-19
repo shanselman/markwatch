@@ -1,0 +1,21 @@
+Datacenters|12
+Global and tour|72
+Microfluidics cooling|180
+Servers|12
+Boost and RDMA|240
+Bare metal|96
+Compute|12
+Direct virtualization and LM|252
+ACI on direct virtualization|204
+Manifold on direct virtualization|252
+Networking|12
+Disaggregated SDN|120
+Vnet Appliance|150
+Vnet terminal access point|132
+Storage|12
+scaled storage account|204
+Confidential computing|12
+TEE and CC progress|180
+Integrated HSM|60
+CSS+MST|174
+Optical computing|180

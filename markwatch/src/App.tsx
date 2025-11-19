@@ -20,6 +20,7 @@ function App() {
   const [elapsedMs, setElapsedMs] = useState(0)
   const startTimeRef = useRef<number>(0)
   const animationFrameRef = useRef<number | undefined>(undefined)
+  const presenterWindowRef = useRef<Window | null>(null)
 
   const currentTopic = topics[currentTopicIndex]
   const totalDuration = currentTopic?.duration || 90
@@ -99,11 +100,79 @@ function App() {
     }
   }, [isRunning, totalDuration, elapsedMs])
 
-  const handleFileLoad = (loadedTopics: Topic[]) => {
+  // Update presenter window when state changes
+  useEffect(() => {
+    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+      const remainingMs = Math.max(0, totalDuration * 1000 - elapsedMs)
+      const progress = totalDuration > 0 ? elapsedMs / (totalDuration * 1000) : 0
+      
+      presenterWindowRef.current.postMessage({
+        type: 'TIMER_UPDATE',
+        payload: {
+          topic: currentTopic?.name || 'Loading...',
+          remainingMs,
+          progress,
+          totalDuration
+        }
+      }, '*')
+    }
+  }, [currentTopic, elapsedMs, totalDuration])
+
+  const handleFileLoad = (loadedTopics: Topic[], showPresenter: boolean) => {
     setTopics(loadedTopics)
     setCurrentTopicIndex(0)
     setElapsedMs(0)
     setIsRunning(false)
+
+    if (showPresenter) {
+      openPresenterWindow()
+    }
+  }
+
+  const openPresenterWindow = () => {
+    const width = 800
+    const height = 800
+    const left = window.screen.width - width - 100
+    const top = 100
+
+    const presenterWindow = window.open(
+      '/presenter.html',
+      'MarkWatch Presenter',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`
+    )
+
+    if (presenterWindow) {
+      presenterWindowRef.current = presenterWindow
+      
+      // Send initial state once presenter is ready
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data.type === 'PRESENTER_READY') {
+          const remainingMs = Math.max(0, totalDuration * 1000 - elapsedMs)
+          const progress = totalDuration > 0 ? elapsedMs / (totalDuration * 1000) : 0
+          
+          presenterWindow.postMessage({
+            type: 'TIMER_UPDATE',
+            payload: {
+              topic: currentTopic?.name || 'Loading...',
+              remainingMs,
+              progress,
+              totalDuration
+            }
+          }, '*')
+        }
+      }
+      
+      window.addEventListener('message', handleMessage)
+      
+      // Cleanup
+      const checkClosed = setInterval(() => {
+        if (presenterWindow.closed) {
+          clearInterval(checkClosed)
+          window.removeEventListener('message', handleMessage)
+          presenterWindowRef.current = null
+        }
+      }, 1000)
+    }
   }
 
   const handleClearTopics = () => {
@@ -112,6 +181,13 @@ function App() {
         return
       }
     }
+    
+    // Close presenter window if open
+    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+      presenterWindowRef.current.close()
+      presenterWindowRef.current = null
+    }
+    
     setTopics([])
     setCurrentTopicIndex(0)
     setElapsedMs(0)
@@ -123,30 +199,75 @@ function App() {
   const handleStart = () => {
     if (!currentTopic) return
     setIsRunning(true)
+    
+    // Notify presenter to start its own timer
+    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+      presenterWindowRef.current.postMessage({
+        type: 'TIMER_START',
+        elapsedMs,
+        totalDuration
+      }, '*')
+    }
   }
 
   const handlePause = () => {
     setIsRunning(false)
+    
+    // Notify presenter to pause
+    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+      presenterWindowRef.current.postMessage({
+        type: 'TIMER_PAUSE'
+      }, '*')
+    }
   }
 
   const handleReset = () => {
     setIsRunning(false)
     setElapsedMs(0)
+    
+    // Notify presenter to reset
+    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+      presenterWindowRef.current.postMessage({
+        type: 'TIMER_PAUSE'
+      }, '*')
+    }
   }
 
   const handleNext = () => {
     if (currentTopicIndex < topics.length - 1) {
-      setCurrentTopicIndex(currentTopicIndex + 1)
+      const nextIndex = currentTopicIndex + 1
+      const nextTopic = topics[nextIndex]
+      setCurrentTopicIndex(nextIndex)
       setElapsedMs(0)
-      setIsRunning(false)
+      setIsRunning(true)
+      
+      // Notify presenter to start new topic
+      if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+        presenterWindowRef.current.postMessage({
+          type: 'TIMER_START',
+          elapsedMs: 0,
+          totalDuration: nextTopic.duration
+        }, '*')
+      }
     }
   }
 
   const handlePrevious = () => {
     if (currentTopicIndex > 0) {
-      setCurrentTopicIndex(currentTopicIndex - 1)
+      const prevIndex = currentTopicIndex - 1
+      const prevTopic = topics[prevIndex]
+      setCurrentTopicIndex(prevIndex)
       setElapsedMs(0)
-      setIsRunning(false)
+      setIsRunning(true)
+      
+      // Notify presenter to start previous topic
+      if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
+        presenterWindowRef.current.postMessage({
+          type: 'TIMER_START',
+          elapsedMs: 0,
+          totalDuration: prevTopic.duration
+        }, '*')
+      }
     }
   }
 
@@ -168,37 +289,48 @@ function App() {
             onPause={handlePause}
             onReset={handleReset}
           />
-          <div className="navigation desktop-navigation">
+          <div className="main-controls">
             <button 
               onClick={handlePrevious} 
               disabled={currentTopicIndex === 0}
-              className="nav-btn"
-              title="Arrow Left"
+              className="control-btn nav-btn"
+              title="Previous (← Arrow Left)"
             >
-              ← Previous
+              ←
             </button>
-            <span className="topic-counter">
-              {currentTopicIndex + 1} / {topics.length}
-            </span>
+            {!isRunning ? (
+              <button onClick={handleStart} className="control-btn start-btn" title="Start (Space)">
+                ▶
+              </button>
+            ) : (
+              <button onClick={handlePause} className="control-btn pause-btn" title="Pause (Space)">
+                ⏸
+              </button>
+            )}
+            <button onClick={handleReset} className="control-btn reset-btn" title="Reset (R)">
+              ↻
+            </button>
             <button 
               onClick={handleNext} 
               disabled={currentTopicIndex === topics.length - 1}
-              className="nav-btn"
-              title="Arrow Right"
+              className="control-btn nav-btn"
+              title="Next (→ Arrow Right)"
             >
-              Next →
+              →
+            </button>
+            <button 
+              onClick={handleClearTopics}
+              className="control-btn clear-btn"
+              title="Clear all topics"
+            >
+              ✕
             </button>
           </div>
-          <div className="keyboard-hints-desktop">
-            ← → : Navigate • Space: Play/Pause • R: Reset
+          <div className="status-bar">
+            <span className="topic-counter">
+              {currentTopicIndex + 1} / {topics.length}
+            </span>
           </div>
-          <button 
-            onClick={handleClearTopics}
-            className="clear-btn"
-            title="Clear all topics and start over"
-          >
-            Clear Topics
-          </button>
         </>
       )}
     </div>

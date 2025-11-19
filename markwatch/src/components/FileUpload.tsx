@@ -3,13 +3,14 @@ import './FileUpload.css'
 import type { Topic } from '../types'
 
 interface FileUploadProps {
-  onFileLoad: (topics: Topic[]) => void
+  onFileLoad: (topics: Topic[], showPresenter: boolean) => void
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileLoad }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPresenterView, setShowPresenterView] = useState(false)
 
   const parseFile = (content: string): Topic[] => {
     const lines = content.split('\n').filter(line => line.trim())
@@ -55,7 +56,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileLoad }) => {
       try {
         const content = e.target?.result as string
         const topics = parseFile(content)
-        onFileLoad(topics)
+        onFileLoad(topics, showPresenterView)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to parse file')
       }
@@ -134,6 +135,18 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileLoad }) => {
         <h2 className="upload-title">Drop your topics file here</h2>
         <p className="upload-description">or click to browse</p>
         <div className="upload-hint">Supports .txt files</div>
+      </div>
+
+      <div className="presenter-mode-option">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={showPresenterView}
+            onChange={(e) => setShowPresenterView(e.target.checked)}
+          />
+          <span>Show Presenter View</span>
+        </label>
+        <p className="option-hint">Opens a separate window with just the timer display</p>
       </div>
 
       {error && (

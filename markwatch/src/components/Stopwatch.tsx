@@ -269,34 +269,6 @@ const Stopwatch: React.FC<StopwatchProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Desktop Controls */}
-      <div className="controls desktop-controls">
-        {!isRunning ? (
-          <button onClick={onStart} className="control-btn start-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M8 5v14l11-7z" fill="currentColor" />
-            </svg>
-            Start
-          </button>
-        ) : (
-          <button onClick={onPause} className="control-btn pause-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="6" y="5" width="4" height="14" fill="currentColor" />
-              <rect x="14" y="5" width="4" height="14" fill="currentColor" />
-            </svg>
-            Pause
-          </button>
-        )}
-        <button onClick={onReset} className="control-btn reset-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-            <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16" />
-          </svg>
-          Reset
-        </button>
-      </div>
       </div>
     </div>
   )

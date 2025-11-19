@@ -2,6 +2,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  user-select: none;
+  cursor: default;
 }
 
 :root {
@@ -35,6 +37,7 @@ button {
   font-family: inherit;
   outline: none;
   border: none;
+  cursor: pointer;
 }
 
 button:focus-visible {
