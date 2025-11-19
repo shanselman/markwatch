@@ -114,8 +114,6 @@ function App() {
       const remainingMs = Math.max(0, totalDuration * 1000 - elapsedMs)
       const progress = totalDuration > 0 ? elapsedMs / (totalDuration * 1000) : 0
       
-      console.log('Sending to presenter:', { shrinkMode, progress })
-      
       presenterWindowRef.current.postMessage({
         type: 'TIMER_UPDATE',
         payload: {

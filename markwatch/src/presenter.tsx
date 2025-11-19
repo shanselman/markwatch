@@ -29,10 +29,8 @@ function PresenterApp() {
 
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      console.log('Presenter received message:', event.data)
       if (event.data.type === 'TIMER_UPDATE') {
         const payload = event.data.payload
-        console.log('Updating presenter state:', payload)
         setState({
           topic: payload.topic,
           remainingMs: payload.remainingMs,
