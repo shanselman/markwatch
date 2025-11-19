@@ -29,19 +29,104 @@ const Stopwatch: React.FC<StopwatchProps> = ({
 
   const getStatusColor = () => {
     if (remainingMs <= 0) return '#ef4444' // red
+    if (remainingMs <= 5000) return '#ef4444' // red at 5s for mobile
     if (remainingMs <= 15000) return '#f59e0b' // yellow
     return '#06b6d4' // cyan
   }
 
+  const getMobileStatusColor = () => {
+    if (remainingMs <= 0) return '#ef4444' // red
+    if (remainingMs <= 5000) return '#ef4444' // red at 5s
+    if (remainingMs <= 15000) return '#f59e0b' // yellow at 15s
+    return '#10b981' // green for mobile
+  }
+
   const statusColor = getStatusColor()
+  const mobileColor = getMobileStatusColor()
 
   return (
     <div className="stopwatch-container">
-      <div className="topic-display">
-        <h1 className="topic-text">{topic}</h1>
+      {/* Mobile Pie Chart View */}
+      <div className="mobile-pie-view">
+        <div className="topic-display-mobile">
+          <h2 className="topic-text-mobile">{topic}</h2>
+        </div>
+        
+        <svg className="pie-chart" viewBox="0 0 200 200">
+          {/* Background circle */}
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth="20"
+          />
+          
+          {/* Animated pie segment */}
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
+            fill="none"
+            stroke={mobileColor}
+            strokeWidth="20"
+            strokeDasharray={`${2 * Math.PI * 90}`}
+            strokeDashoffset={`${2 * Math.PI * 90 * (progress)}`}
+            strokeLinecap="butt"
+            transform="rotate(-90 100 100)"
+            className="pie-segment"
+            style={{
+              filter: remainingMs <= 5000 ? `drop-shadow(0 0 10px ${mobileColor})` : 'none',
+            }}
+          />
+          
+          {/* Center text */}
+          <text
+            x="100"
+            y="95"
+            textAnchor="middle"
+            className="pie-time"
+            fill={mobileColor}
+            style={{ fontSize: '28px', fontWeight: 'bold' }}
+          >
+            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+          </text>
+          <text
+            x="100"
+            y="115"
+            textAnchor="middle"
+            className="pie-ms"
+            fill={mobileColor}
+            style={{ fontSize: '16px', opacity: 0.8 }}
+          >
+            .{String(milliseconds).padStart(2, '0')}
+          </text>
+        </svg>
+
+        <div className="mobile-controls">
+          {!isRunning ? (
+            <button onClick={onStart} className="mobile-control-btn mobile-start-btn">
+              ▶ Start
+            </button>
+          ) : (
+            <button onClick={onPause} className="mobile-control-btn mobile-pause-btn">
+              ⏸ Pause
+            </button>
+          )}
+          <button onClick={onReset} className="mobile-control-btn mobile-reset-btn">
+            ↻ Reset
+          </button>
+        </div>
       </div>
 
-      <div className="stopwatch">
+      {/* Desktop Analog Watch View */}
+      <div className="desktop-watch-view">
+        <div className="topic-display">
+          <h1 className="topic-text">{topic}</h1>
+        </div>
+
+        <div className="stopwatch">
         {/* Outer bezel ring */}
         <div className="stopwatch-bezel">
           {/* Progress ring */}
@@ -138,8 +223,8 @@ const Stopwatch: React.FC<StopwatchProps> = ({
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="controls">
+      {/* Desktop Controls */}
+      <div className="controls desktop-controls">
         {!isRunning ? (
           <button onClick={onStart} className="control-btn start-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -164,6 +249,7 @@ const Stopwatch: React.FC<StopwatchProps> = ({
           </svg>
           Reset
         </button>
+      </div>
       </div>
     </div>
   )
