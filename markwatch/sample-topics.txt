@@ -1,0 +1,7 @@
+RDAM|10
+Azure Storage|15
+Hanselman|20
+More Cloud|150
+Technical Architecture|180
+Live Demo|200
+Q&A Session|300
