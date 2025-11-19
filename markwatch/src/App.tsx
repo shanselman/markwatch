@@ -4,9 +4,18 @@ import Stopwatch from './components/Stopwatch'
 import FileUpload from './components/FileUpload'
 import type { Topic } from './types'
 
+const STORAGE_KEY = 'markwatch_topics'
+const CURRENT_INDEX_KEY = 'markwatch_current_index'
+
 function App() {
-  const [topics, setTopics] = useState<Topic[]>([])
-  const [currentTopicIndex, setCurrentTopicIndex] = useState<number>(0)
+  const [topics, setTopics] = useState<Topic[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+  const [currentTopicIndex, setCurrentTopicIndex] = useState<number>(() => {
+    const saved = localStorage.getItem(CURRENT_INDEX_KEY)
+    return saved ? parseInt(saved, 10) : 0
+  })
   const [isRunning, setIsRunning] = useState(false)
   const [elapsedMs, setElapsedMs] = useState(0)
   const startTimeRef = useRef<number>(0)
@@ -14,6 +23,31 @@ function App() {
 
   const currentTopic = topics[currentTopicIndex]
   const totalDuration = currentTopic?.duration || 90
+
+  // Save topics to localStorage whenever they change
+  useEffect(() => {
+    if (topics.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(topics))
+    }
+  }, [topics])
+
+  // Save current topic index to localStorage
+  useEffect(() => {
+    localStorage.setItem(CURRENT_INDEX_KEY, currentTopicIndex.toString())
+  }, [currentTopicIndex])
+
+  // Warn before leaving if timer is running
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isRunning) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isRunning])
 
   useEffect(() => {
     if (!isRunning) return
@@ -46,6 +80,20 @@ function App() {
     setCurrentTopicIndex(0)
     setElapsedMs(0)
     setIsRunning(false)
+  }
+
+  const handleClearTopics = () => {
+    if (isRunning) {
+      if (!window.confirm('Timer is running! Are you sure you want to clear all topics?')) {
+        return
+      }
+    }
+    setTopics([])
+    setCurrentTopicIndex(0)
+    setElapsedMs(0)
+    setIsRunning(false)
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(CURRENT_INDEX_KEY)
   }
 
   const handleStart = () => {
@@ -115,6 +163,13 @@ function App() {
               Next →
             </button>
           </div>
+          <button 
+            onClick={handleClearTopics}
+            className="clear-btn"
+            title="Clear all topics and start over"
+          >
+            Clear Topics
+          </button>
         </>
       )}
     </div>
