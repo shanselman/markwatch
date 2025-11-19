@@ -52,53 +52,50 @@ const Stopwatch: React.FC<StopwatchProps> = ({
           <h2 className="topic-text-mobile">{topic}</h2>
         </div>
         
-        <svg className="pie-chart" viewBox="0 0 200 200">
-          {/* Background circle */}
+        <svg className="pie-chart" viewBox="0 0 120 120">
+          {/* Filled background circle */}
           <circle
-            cx="100"
-            cy="100"
-            r="90"
-            fill="none"
-            stroke="rgba(255, 255, 255, 0.1)"
-            strokeWidth="20"
+            cx="60"
+            cy="60"
+            r="55"
+            fill="rgba(255, 255, 255, 0.05)"
           />
           
-          {/* Animated pie segment */}
+          {/* Animated filled pie segment - shrinks as time passes */}
           <circle
-            cx="100"
-            cy="100"
-            r="90"
+            cx="60"
+            cy="60"
+            r="55"
             fill="none"
             stroke={mobileColor}
-            strokeWidth="20"
-            strokeDasharray={`${2 * Math.PI * 90}`}
-            strokeDashoffset={`${2 * Math.PI * 90 * (progress)}`}
-            strokeLinecap="butt"
-            transform="rotate(-90 100 100)"
+            strokeWidth="110"
+            strokeDasharray={`${2 * Math.PI * 55}`}
+            strokeDashoffset={`${2 * Math.PI * 55 * (progress)}`}
+            transform="rotate(-90 60 60)"
             className="pie-segment"
             style={{
-              filter: remainingMs <= 5000 ? `drop-shadow(0 0 10px ${mobileColor})` : 'none',
+              filter: remainingMs <= 5000 ? `drop-shadow(0 0 8px ${mobileColor})` : 'none',
             }}
           />
           
           {/* Center text */}
           <text
-            x="100"
-            y="95"
+            x="60"
+            y="56"
             textAnchor="middle"
             className="pie-time"
-            fill={mobileColor}
-            style={{ fontSize: '28px', fontWeight: 'bold' }}
+            fill="#fff"
+            style={{ fontSize: '18px', fontWeight: 'bold' }}
           >
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </text>
           <text
-            x="100"
-            y="115"
+            x="60"
+            y="70"
             textAnchor="middle"
             className="pie-ms"
-            fill={mobileColor}
-            style={{ fontSize: '16px', opacity: 0.8 }}
+            fill="#fff"
+            style={{ fontSize: '12px', opacity: 0.7 }}
           >
             .{String(milliseconds).padStart(2, '0')}
           </text>
@@ -107,15 +104,15 @@ const Stopwatch: React.FC<StopwatchProps> = ({
         <div className="mobile-controls">
           {!isRunning ? (
             <button onClick={onStart} className="mobile-control-btn mobile-start-btn">
-              ▶ Start
+              ▶
             </button>
           ) : (
             <button onClick={onPause} className="mobile-control-btn mobile-pause-btn">
-              ⏸ Pause
+              ⏸
             </button>
           )}
           <button onClick={onReset} className="mobile-control-btn mobile-reset-btn">
-            ↻ Reset
+            ↻
           </button>
         </div>
       </div>
