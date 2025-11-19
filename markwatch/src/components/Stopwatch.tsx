@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import './Stopwatch.css'
 
 interface StopwatchProps {
@@ -44,6 +44,34 @@ const Stopwatch: React.FC<StopwatchProps> = ({
   const statusColor = getStatusColor()
   const mobileColor = getMobileStatusColor()
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle keys when not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      switch (e.key.toLowerCase()) {
+        case ' ':
+          e.preventDefault()
+          if (isRunning) {
+            onPause()
+          } else {
+            onStart()
+          }
+          break
+        case 'r':
+          e.preventDefault()
+          onReset()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [isRunning, onStart, onPause, onReset])
+
   return (
     <div className="stopwatch-container">
       {/* Mobile Pie Chart View */}
@@ -66,9 +94,9 @@ const Stopwatch: React.FC<StopwatchProps> = ({
             cx="60"
             cy="60"
             r="55"
-            fill="none"
-            stroke={mobileColor}
-            strokeWidth="110"
+            fill={mobileColor}
+            stroke="none"
+            strokeWidth="0"
             strokeDasharray={`${2 * Math.PI * 55}`}
             strokeDashoffset={`${2 * Math.PI * 55 * (progress)}`}
             transform="rotate(-90 60 60)"
@@ -102,18 +130,24 @@ const Stopwatch: React.FC<StopwatchProps> = ({
         </svg>
 
         <div className="mobile-controls">
-          {!isRunning ? (
-            <button onClick={onStart} className="mobile-control-btn mobile-start-btn">
-              ▶
-            </button>
-          ) : (
-            <button onClick={onPause} className="mobile-control-btn mobile-pause-btn">
-              ⏸
-            </button>
-          )}
-          <button onClick={onReset} className="mobile-control-btn mobile-reset-btn">
+          <button 
+            onClick={!isRunning ? onStart : onPause} 
+            className="mobile-control-btn mobile-main-btn"
+            title={!isRunning ? "Space to start" : "Space to pause"}
+          >
+            {!isRunning ? '▶' : '⏸'}
+          </button>
+          <button 
+            onClick={onReset} 
+            className="mobile-control-btn mobile-reset-btn"
+            title="R to reset"
+          >
             ↻
           </button>
+        </div>
+        
+        <div className="keyboard-hints">
+          Space: Play/Pause • R: Reset
         </div>
       </div>
 

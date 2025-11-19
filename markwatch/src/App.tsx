@@ -49,6 +49,30 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isRunning])
 
+  // Keyboard shortcuts for navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle keys when not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault()
+          handlePrevious()
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          handleNext()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [currentTopicIndex, topics.length])
+
   useEffect(() => {
     if (!isRunning) return
 
@@ -144,11 +168,12 @@ function App() {
             onPause={handlePause}
             onReset={handleReset}
           />
-          <div className="navigation">
+          <div className="navigation desktop-navigation">
             <button 
               onClick={handlePrevious} 
               disabled={currentTopicIndex === 0}
               className="nav-btn"
+              title="Arrow Left"
             >
               ← Previous
             </button>
@@ -159,9 +184,13 @@ function App() {
               onClick={handleNext} 
               disabled={currentTopicIndex === topics.length - 1}
               className="nav-btn"
+              title="Arrow Right"
             >
               Next →
             </button>
+          </div>
+          <div className="keyboard-hints-desktop">
+            ← → : Navigate • Space: Play/Pause • R: Reset
           </div>
           <button 
             onClick={handleClearTopics}
