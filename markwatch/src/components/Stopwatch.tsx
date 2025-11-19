@@ -81,7 +81,26 @@ const Stopwatch: React.FC<StopwatchProps> = ({
         </div>
         
         <svg className="pie-chart" viewBox="0 0 120 120">
-          {/* Filled background circle */}
+          <defs>
+            {/* Define a mask for the countdown effect */}
+            <mask id="pieMask">
+              <circle cx="60" cy="60" r="60" fill="white" />
+              {/* This path will reveal the pie as it counts down */}
+              <path
+                d={`
+                  M 60 60
+                  L 60 5
+                  A 55 55 0 ${progress > 0.5 ? 1 : 0} 1 
+                  ${60 + 55 * Math.sin(progress * 2 * Math.PI)} 
+                  ${60 - 55 * Math.cos(progress * 2 * Math.PI)}
+                  Z
+                `}
+                fill="black"
+              />
+            </mask>
+          </defs>
+          
+          {/* Background circle */}
           <circle
             cx="60"
             cy="60"
@@ -95,14 +114,11 @@ const Stopwatch: React.FC<StopwatchProps> = ({
             cy="60"
             r="55"
             fill={mobileColor}
-            stroke="none"
-            strokeWidth="0"
-            strokeDasharray={`${2 * Math.PI * 55}`}
-            strokeDashoffset={`${2 * Math.PI * 55 * (progress)}`}
-            transform="rotate(-90 60 60)"
+            mask="url(#pieMask)"
             className="pie-segment"
             style={{
               filter: remainingMs <= 5000 ? `drop-shadow(0 0 8px ${mobileColor})` : 'none',
+              transition: 'fill 0.3s ease',
             }}
           />
           
