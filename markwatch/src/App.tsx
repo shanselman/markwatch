@@ -19,7 +19,6 @@ function App() {
   const [isRunning, setIsRunning] = useState(false)
   const [elapsedMs, setElapsedMs] = useState(0)
   const startTimeRef = useRef<number>(0)
-  const animationFrameRef = useRef<number | undefined>(undefined)
   const presenterWindowRef = useRef<Window | null>(null)
 
   const currentTopic = topics[currentTopicIndex]
@@ -77,25 +76,33 @@ function App() {
   useEffect(() => {
     if (!isRunning) return
 
-    const animate = () => {
-      const now = performance.now()
-      const elapsed = now - startTimeRef.current
-      setElapsedMs(elapsed)
-
+    startTimeRef.current = performance.now() - elapsedMs
+    
+    const updateTimer = () => {
+      const elapsed = performance.now() - startTimeRef.current
       if (elapsed < totalDuration * 1000) {
-        animationFrameRef.current = requestAnimationFrame(animate)
+        setElapsedMs(elapsed)
       } else {
         setIsRunning(false)
         setElapsedMs(totalDuration * 1000)
       }
     }
 
-    startTimeRef.current = performance.now() - elapsedMs
-    animationFrameRef.current = requestAnimationFrame(animate)
+    // Use setInterval for consistent updates even when window loses focus
+    const intervalId = setInterval(updateTimer, 16) // ~60fps
+    
+    // Also use RAF for smooth updates when in focus
+    let rafId: number
+    const animate = () => {
+      updateTimer()
+      rafId = requestAnimationFrame(animate)
+    }
+    rafId = requestAnimationFrame(animate)
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
+      clearInterval(intervalId)
+      if (rafId) {
+        cancelAnimationFrame(rafId)
       }
     }
   }, [isRunning, totalDuration, elapsedMs])
@@ -124,12 +131,15 @@ function App() {
     setElapsedMs(0)
     setIsRunning(false)
 
-    if (showPresenter) {
-      openPresenterWindow()
+    if (showPresenter && loadedTopics.length > 0) {
+      // Open presenter with the loaded data directly
+      requestAnimationFrame(() => {
+        openPresenterWindow(loadedTopics[0])
+      })
     }
   }
 
-  const openPresenterWindow = () => {
+  const openPresenterWindow = (initialTopic?: Topic) => {
     const width = 800
     const height = 800
     const left = window.screen.width - width - 100
@@ -147,18 +157,22 @@ function App() {
       // Send initial state once presenter is ready
       const handleMessage = (event: MessageEvent) => {
         if (event.data.type === 'PRESENTER_READY') {
-          const remainingMs = Math.max(0, totalDuration * 1000 - elapsedMs)
-          const progress = totalDuration > 0 ? elapsedMs / (totalDuration * 1000) : 0
+          // Use initialTopic if provided, otherwise use current state
+          const topic = initialTopic ? initialTopic.name : (currentTopic?.name || 'Loading...')
+          const duration = initialTopic ? initialTopic.duration : (currentTopic?.duration || 90)
+          const remainingMs = Math.max(0, duration * 1000 - elapsedMs)
+          const progress = duration > 0 ? elapsedMs / (duration * 1000) : 0
           
           presenterWindow.postMessage({
             type: 'TIMER_UPDATE',
             payload: {
-              topic: currentTopic?.name || 'Loading...',
+              topic,
               remainingMs,
               progress,
-              totalDuration
+              totalDuration: duration
             }
           }, '*')
+          window.removeEventListener('message', handleMessage)
         }
       }
       
@@ -168,7 +182,6 @@ function App() {
       const checkClosed = setInterval(() => {
         if (presenterWindow.closed) {
           clearInterval(checkClosed)
-          window.removeEventListener('message', handleMessage)
           presenterWindowRef.current = null
         }
       }, 1000)
@@ -199,75 +212,32 @@ function App() {
   const handleStart = () => {
     if (!currentTopic) return
     setIsRunning(true)
-    
-    // Notify presenter to start its own timer
-    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
-      presenterWindowRef.current.postMessage({
-        type: 'TIMER_START',
-        elapsedMs,
-        totalDuration
-      }, '*')
-    }
   }
 
   const handlePause = () => {
     setIsRunning(false)
-    
-    // Notify presenter to pause
-    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
-      presenterWindowRef.current.postMessage({
-        type: 'TIMER_PAUSE'
-      }, '*')
-    }
   }
 
   const handleReset = () => {
     setIsRunning(false)
     setElapsedMs(0)
-    
-    // Notify presenter to reset
-    if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
-      presenterWindowRef.current.postMessage({
-        type: 'TIMER_PAUSE'
-      }, '*')
-    }
   }
 
   const handleNext = () => {
     if (currentTopicIndex < topics.length - 1) {
       const nextIndex = currentTopicIndex + 1
-      const nextTopic = topics[nextIndex]
       setCurrentTopicIndex(nextIndex)
       setElapsedMs(0)
       setIsRunning(true)
-      
-      // Notify presenter to start new topic
-      if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
-        presenterWindowRef.current.postMessage({
-          type: 'TIMER_START',
-          elapsedMs: 0,
-          totalDuration: nextTopic.duration
-        }, '*')
-      }
     }
   }
 
   const handlePrevious = () => {
     if (currentTopicIndex > 0) {
       const prevIndex = currentTopicIndex - 1
-      const prevTopic = topics[prevIndex]
       setCurrentTopicIndex(prevIndex)
       setElapsedMs(0)
       setIsRunning(true)
-      
-      // Notify presenter to start previous topic
-      if (presenterWindowRef.current && !presenterWindowRef.current.closed) {
-        presenterWindowRef.current.postMessage({
-          type: 'TIMER_START',
-          elapsedMs: 0,
-          totalDuration: prevTopic.duration
-        }, '*')
-      }
     }
   }
 

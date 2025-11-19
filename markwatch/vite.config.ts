@@ -5,7 +5,7 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/markwatch/',
+  base: process.env.NODE_ENV === 'production' ? '/markwatch/' : '/',
   build: {
     rollupOptions: {
       input: {
